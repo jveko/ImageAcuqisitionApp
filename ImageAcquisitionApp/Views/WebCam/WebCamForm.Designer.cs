@@ -1,6 +1,6 @@
-﻿namespace ImageAcquisitionApp
+﻿namespace ImageAcquisitionApp.Views.WebCam
 {
-  partial class Form1
+  partial class WebCamForm
   {
     /// <summary>
     /// Required designer variable.
@@ -95,7 +95,7 @@
       this.Controls.Add(this.framePerSecondLabel);
       this.Controls.Add(this.cameraLabel);
       this.Controls.Add(this.pictureBox1);
-      this.Name = "Form1";
+      this.Name = "WebCamForm";
       this.Text = "Webcam Test";
       ((System.ComponentModel.ISupportInitialize) (this.pictureBox1)).EndInit();
       this.ResumeLayout(false);

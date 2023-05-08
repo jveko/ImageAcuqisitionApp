@@ -1,22 +1,30 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using ImageAcquisitionApp.Controllers;
+using ImageAcquisitionApp.Views.WebCam;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace ImageAcquisitionApp
+namespace ImageAcquisitionApp;
+
+internal static class Program
 {
-    static class Program
+    /// <summary>
+    ///     The main entry point for the application.
+    /// </summary>
+    [STAThread]
+    private static void Main()
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
-        }
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+        // Set up the DI container
+        var serviceProvider = new ServiceCollection()
+            .AddTransient<ScanController>()
+            .BuildServiceProvider();
+
+        // Create the UserForm and pass in the Controllers as arguments
+        var scanController = serviceProvider.GetService<ScanController>();
+        var webCamForm = new WebCamForm(scanController);
+
+        Application.Run(webCamForm);
     }
 }
