@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ImageAcquisitionApp.Controllers;
 using OpenCvSharp;
@@ -26,7 +27,7 @@ public partial class WebCamForm : Form
         _scanController = scanController;
         InitializeComponent();
 
-        _capture = new VideoCapture(1)
+        _capture = new VideoCapture(2)
         {
             FrameWidth = 640,
             FrameHeight = 480
@@ -57,12 +58,35 @@ public partial class WebCamForm : Form
         _previousFrame = frame.Clone();
     }
 
-    private void forceCaptureButton_Click(object sender, EventArgs e)
+    private async void forceCaptureButton_Click(object sender, EventArgs e)
     {
-        CaptureFrame();
+        var frame = await CaptureFrame();
+        ScanDocument(frame);
     }
-    
-    private void CompareFrame(Mat frame)
+
+    private void ScanDocument(Mat frame)
+    {
+        try
+        {
+            var (image, corners) = _scanController.ScanImage(frame);
+            var newCorners = _scanController.ArrangePts(corners, image.Size());
+            var ratio = _scanController.ScannedRatio(newCorners);
+            var (dst, dim) = _scanController.SetDestinationPts(ratio, image.Size());
+            var warp = _scanController.WarpImg(image, newCorners, dst, image.Size());
+            var (warped, asd) = _scanController.IsImage(Path.Combine(ImageBasePath, "example.jpeg"));
+            var (warped2, asds) = _scanController.IsImage2(Path.Combine(ImageBasePath, "example.jpeg"));
+            _scanController.SaveImage(warp, "final.jpg");
+            _scanController.SaveImage(warped, "final1.jpg");
+            _scanController.SaveImage(warped2, "final2.jpg");
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show($"Error: {e.Message}");
+            Console.WriteLine(e);
+        }
+    }
+
+    private async void CompareFrame(Mat frame)
     {
         if (_previousFrame.Empty()) return;
         // Calculate absolute difference between frames
@@ -83,7 +107,7 @@ public partial class WebCamForm : Form
                 {
                     captureStatusLabel.Text = @$"Status Capture : Capturing ({_frameCounter})";
                     _isAlreadyCaptured = true;
-                    CaptureFrame();
+                    ScanDocument(await CaptureFrame());
                 }
             }
             else
@@ -100,7 +124,7 @@ public partial class WebCamForm : Form
         }
     }
 
-    private void CaptureFrame()
+    private async Task<Mat> CaptureFrame()
     {
         // Set camera focus to 0 (minimum value)
         _capture.Focus = 0;
@@ -109,22 +133,23 @@ public partial class WebCamForm : Form
         Thread.Sleep(1000);
 
         // Capture current frame
-        using var frame = new Mat();
+        var frame = new Mat();
         var isReading = _capture.Read(frame);
         if (!isReading)
         {
             MessageBox.Show("Failed to capture frame!");
-            return;
+            return null;
         }
 
         // Generate filename with timestamp
-        var timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-        var filename = $"frame_{timestamp}.jpg";
+        // var timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+        // var filename = $"frame_{timestamp}.jpg";
 
         // Save frame as image
-        Cv2.ImWrite(Path.Combine(ImageBasePath, filename), frame);
+        // Cv2.ImWrite(Path.Combine(ImageBasePath, filename), frame);
 
         // Show message box with filename
-        MessageBox.Show($"Frame saved as {filename} {AppDomain.CurrentDomain.BaseDirectory}");
+        // MessageBox.Show($"Frame saved as {filename} {AppDomain.CurrentDomain.BaseDirectory}");
+        return frame;
     }
 }

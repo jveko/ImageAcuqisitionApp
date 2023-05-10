@@ -135,6 +135,7 @@
         <Folder Include="Models\" />
     </ItemGroup>
     <ItemGroup>
+        <Content Include="Assets\Images\example.jpeg" />
         <Content Include="Assets\Images\image.png" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
